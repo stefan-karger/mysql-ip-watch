@@ -33,6 +33,10 @@ This is process-list sampling. It can miss queries that finish between samples;
 an empty log does not prove that the client never queried the server. Restarting
 the script resets duplicate tracking and can record an ongoing query again.
 
+See [polling interval guidance](SETUP.md#choose-a-polling-interval) for choosing
+between one-second and faster sampling, estimating capture chances, and detecting
+idle connections or brief queries.
+
 ## Implementation choices
 
 | Component | Purpose |

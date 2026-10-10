@@ -33,7 +33,7 @@ The supplied file contains working local XAMPP defaults:
 | `mysql.user` | **Monitoring login used by this script**, with permission to see every user's connections. This is not the suspect's login. | `"root"` or `"ip_watch"` |
 | `mysql.password` | Password for the monitoring login, inside quotes. Local XAMPP default is an empty string. | `"your-password"` or `""` |
 | `target_ip` | **Suspect's client/source IP**, as the database server sees it. This is not the database server's address unless both happen to be the same. | `"192.168.10.42"` |
-| `interval_seconds` | How many seconds between samples. Keep `1`, or use `0.5` for more frequent sampling. Minimum `0.05`. | `1` |
+| `interval_seconds` | How many seconds between samples. Start with `1`; see the interval guidance below before lowering it. Minimum accepted value `0.05`. | `1` |
 | `max_hours` | How long this invocation runs before stopping. Maximum `168` = seven days. | `168` or `24` |
 | `include_idle` | `false`: capture running SQL only. `true`: also capture matching idle connections once per observed idle period, with `query: null`. | `false` |
 | `hostname_aliases` | Map server-reported hostnames to their known client IPs. Details below. | `{"office-pc": "192.168.10.42"}` |
@@ -47,6 +47,45 @@ to MySQL may be shared by several people.
 Use valid JSON: double quotes around strings, no comments and no trailing comma
 after the final field. Escape Windows backslashes (`"C:\\certs\\ca.pem"`) or
 use forward slashes (`"C:/certs/ca.pem"`). Stop/restart after editing settings.
+
+### Choose a polling interval
+
+**Start with `"interval_seconds": 1`.** For this one-week investigation, try
+`0.5` only if database CPU and application response times remain stable during
+busy periods. Compare monitoring off and on under similar workloads. Avoid
+`0.1` or faster without measuring the real server; the minimum accepted setting
+of `0.05` is a validation limit, not a recommended interval.
+
+The script reuses one connection and sends one process-list query per successful
+poll. It reads all connections before filtering by IP, so the cost depends on
+the server's connection count and workload. MariaDB documents that this
+process-list access uses locking:
+[MariaDB process-list documentation](https://mariadb.com/docs/server/reference/sql-statements/administrative-sql-statements/show/show-processlist).
+Polls run sequentially; slow responses and reconnects reduce sampling frequency.
+
+| Interval | Intended polls per second | Approximate chance of catching one 50 ms query |
+| --- | --- | --- |
+| `1` second | 1 | 5% |
+| `0.5` seconds | 2 | 10% |
+| `0.1` seconds | 10 | 50% |
+
+These are mathematical estimates, not measurements. They assume regularly
+spaced snapshots and a query starting at a random point between them. For a
+query shorter than the interval, the approximate chance is its duration divided
+by the interval. A query can start and finish entirely between polls. Running
+for a week increases opportunities to observe repeated activity but does not
+guarantee capturing an isolated short query.
+
+Set `"include_idle": true` if detecting the suspect IP's connection is also
+useful. An idle event has `query: null`; it cannot recover SQL missed between
+polls. **An empty log does not prove the client never queried the database.**
+
+For more complete evidence of brief queries, use server-side audit or general
+query logging. MySQL's general query log records SQL statements when received,
+without needing to sample their execution:
+[MySQL general query log documentation](https://dev.mysql.com/doc/refman/8.4/en/query-log.html).
+Logging adds work and consumes disk space, so measure its impact and monitor log
+growth on the real server. This script does not enable server-side logging.
 
 ### When MySQL shows a hostname instead of an IP
 
