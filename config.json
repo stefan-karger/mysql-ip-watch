@@ -1,0 +1,14 @@
+{
+  "mysql": {
+    "host": "127.0.0.1",
+    "port": 3306,
+    "user": "root",
+    "password": "",
+    "tls_ca": null
+  },
+  "target_ip": "127.0.0.1",
+  "interval_seconds": 1,
+  "max_hours": 168,
+  "include_idle": false,
+  "hostname_aliases": {"localhost": "127.0.0.1"}
+}
