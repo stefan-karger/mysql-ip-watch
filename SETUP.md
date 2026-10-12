@@ -5,7 +5,15 @@
 Edit **`config.json` in the same folder as `watch.py` and `run.cmd`**.
 All investigation settings go here. You do not need to edit the Python script.
 
-The supplied file contains working local XAMPP defaults:
+`config.json` holds your live settings and is excluded from Git. Setup creates
+it from the versioned `config.example.json` only if it is missing. To create it
+manually, run this once before editing your settings:
+
+```powershell
+Copy-Item .\config.example.json .\config.json
+```
+
+The example file contains local XAMPP defaults:
 
 ```json
 {
@@ -122,7 +130,16 @@ empty. Remove that session override with
 
 ## 3. Check access and start
 
-Open PowerShell in this folder. Setup is already installed on this machine:
+Open PowerShell in this folder. Install Python and the requirements first,
+unless setup has already completed:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1
+```
+
+With `uv` installed, setup downloads Python 3.11 if needed and creates a local
+`.venv`. See the installation details below for the alternative using `py`.
+Then check database access:
 
 ```powershell
 .\run.cmd --check
@@ -152,8 +169,8 @@ Copy-Item .\config.json .\config.local.json
 ```
 
 Edit `config.local.json` with your investigation settings before the check and
-run commands. This file is excluded from Git; `config.json` contains the tracked
-local XAMPP example defaults.
+run commands. Both `config.json` and `config.local.json` are excluded from Git;
+`config.example.json` contains the versioned local XAMPP example defaults.
 
 Connection and read timeouts are fixed at five seconds. Temporary connection
 failures retry with delays of 1, 2, 4, 8, 16 and then 30 seconds. Authentication
@@ -216,19 +233,29 @@ Keep the files after the investigation; SQL can include sensitive values.
 
 ## Install on a different Windows machine
 
-Install Python 3.11 or newer with the `py` launcher. Extract the release ZIP, then:
+Install `uv` and extract the release ZIP, then:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1
 ```
 
-This creates `.venv` and installs the pinned driver/authentication dependencies.
-It needs internet access for initial setup. It changes no global execution
-policy. Then complete steps 1–3 above. If you have Python 3.13 instead:
+Setup uses `uv` to download Python 3.11 if needed, create `.venv` in this folder,
+and install the pinned driver/authentication dependencies there. The packages
+are isolated from other projects, similar to a Node application's local
+`node_modules`. The base Python interpreter lives in uv's per-user directory.
+Setup needs internet access initially and changes no global execution policy.
+It also creates `config.json` from `config.example.json` if missing, preserving
+existing settings. Then complete steps 1–3 above.
+
+Without `uv`, install Python 3.11 with the Windows `py` launcher before running
+setup. To choose another version, such as Python 3.13, when creating a new
+environment:
 
 ```powershell
-.\setup.ps1 -PythonVersion 3.13
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1 -PythonVersion 3.13
 ```
+
+Setup reuses an existing `.venv`; `-PythonVersion` applies when creating it.
 
 No virtual environment activation is needed. Do not copy an installed `.venv`
 to another computer; run setup there. Exit code `0` means successful completion

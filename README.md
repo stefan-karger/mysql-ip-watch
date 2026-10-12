@@ -8,13 +8,23 @@ process-list field. Long-running queries are logged once during the current run.
 **Start with [SETUP.md](SETUP.md).** It shows exactly which fields to change,
 where the password goes, how to start/stop and where to find the results.
 
-Install from GitHub:
+With `uv` installed, install from GitHub:
 
 ```powershell
 git clone https://github.com/stefan-karger/mysql-ip-watch.git
 cd mysql-ip-watch
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1
 ```
+
+Setup uses `uv` to download Python 3.11 if needed and install the pinned
+requirements in this folder's `.venv`. No environment activation is needed.
+The base Python interpreter is stored in uv's per-user directory; packages
+are installed only in `.venv`. Without `uv`, setup uses an existing Python
+3.11 installation through the Windows `py` launcher.
+
+Setup also creates `config.json` from `config.example.json` if it is missing.
+Edit `config.json` with your database details and target IP before checking
+access or starting the investigation. Setup preserves existing settings.
 
 ```powershell
 .\run.cmd --check
@@ -25,9 +35,10 @@ Default: local XAMPP, root/empty password, target `127.0.0.1`, polling every
 one second, automatic stop after 168 hours. Ctrl+C stops it earlier. Keep the
 terminal open and the computer awake while investigating.
 
-For investigation-specific settings, copy `config.json` to `config.local.json`
-and launch with `--config .\config.local.json`. The local settings, installed
-environment and runtime logs are excluded from Git.
+`config.example.json` contains the versioned sample settings. Your live
+`config.json`, the installed environment and runtime logs are excluded from
+Git. An optional `config.local.json` is also ignored and can be selected with
+`--config .\config.local.json`.
 
 This is process-list sampling. It can miss queries that finish between samples;
 an empty log does not prove that the client never queried the server. Restarting

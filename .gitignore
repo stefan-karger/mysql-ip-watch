@@ -2,6 +2,7 @@
 /data/
 __pycache__/
 *.py[cod]
+/config.json
 /config.local.json
 /.env
 /.env.*
